@@ -11,7 +11,7 @@ LC_CTYPE=C
 THIS_SCRIPT="$(basename "${0}")"
 
 # Required variables
-TF_VAR_project="${TF_VAR_project:?"Environment variable must be set"}"
+export TF_VAR_project="${TF_VAR_project:?"Environment variable must be set"}"
 
 # Optional
 DISABLE_COLORS="${DISABLE_COLORS:="false"}"
@@ -23,7 +23,7 @@ PRINT_PREFIX="${PRINT_PREFIX:=""}"
 REQUIRED_BINARIES="${REQUIRED_BINARIES:="gcloud terraform awk gnuplot"}"
 TEST_CPUS="${TEST_CPUS:="1 2 4 8 16 32 64"}"
 TEST_ITERATIONS="${TEST_ITERATIONS:="5"}"
-TF_VAR_region="${TF_VAR_region:="europe-west2"}"
+export TF_VAR_region="${TF_VAR_region:="europe-west2"}"
 RESULTS_DIR="${RESULTS_DIR:=""}"
 
 # Runtime
