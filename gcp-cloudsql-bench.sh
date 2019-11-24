@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 # Set strict error checking
 set -emou pipefail
@@ -197,7 +197,7 @@ main() {
 }
 
 # Helper that allows to run indifivual functions
-if [ -n "${1}" ]; then
+if [ -n "${*}" ]; then
   "${@}"
 else
   main
