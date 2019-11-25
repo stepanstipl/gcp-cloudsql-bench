@@ -1,5 +1,5 @@
 resource "google_sql_database_instance" "primary" {
-  provider = "google-beta"
+  provider = google-beta
 
   name = "sql-${random_id.unique.hex}"
 
