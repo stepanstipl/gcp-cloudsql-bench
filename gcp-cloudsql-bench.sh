@@ -95,7 +95,8 @@ bootstrap() {
 }
 
 destroy() {
-  terraform destroy -auto-approve
+  # Teardown (TF tends to fail on destryong the user the 1st time)
+  terraform destroy -auto-approve || terraform destroy -auto-approve
 }
 
 run_remote_command() {
@@ -192,8 +193,10 @@ main() {
     setup_and_run "${i}"
   done
 
-  # Teardown
+  # Cleanup
   destroy
+
+  generate_charts
 }
 
 # Helper that allows to run indifivual functions
