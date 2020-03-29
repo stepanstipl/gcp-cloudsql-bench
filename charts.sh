@@ -11,38 +11,41 @@ LC_CTYPE=C
 DISABLE_COLORS="${DISABLE_COLORS:="false"}"
 TEST_CPUS="${TEST_CPUS:="1 2 4 8 16 32 64"}"
 TEST_ITERATIONS="${TEST_ITERATIONS:="5"}"
-RESULTS_DIR="${RESULTS_DIR:=""}"
+OUTPUT_DIR="${OUTPUT_DIR:="charts"}"
+INPUT_DIRS="$(ls -d results-*)"
+
+mkdir -p "${OUTPUT_DIR}"
 
 # Generate graphs
 generate_charts() {
-  for c in 50 100 200 300 400 500 100-ssl 100-no-pool; do
-    printf '' > "${RESULTS_DIR}/results-${c}.dat"
-    printf '' > "${RESULTS_DIR}/latency-${c}.dat"
+  for c in ${INPUT_DIRS}; do
+    printf '' > "${OUTPUT_DIR}/${c}.dat"
+    printf '' > "${OUTPUT_DIR}/${c}-latency.dat"
 
     for i in ${TEST_CPUS}; do
-      if [[ -f "results-${c}/${i}-1.log" ]]; then
-        echo -en "$i\t" >> "${RESULTS_DIR}/results-${c}.dat"
-        grep 'tps.*including' results-${c}/${i}-[0-9]* | cut -f3 -d' ' \
-          | st --avg -no-header >> "${RESULTS_DIR}/results-${c}.dat"
+      if [[ -f "${c}/${i}-1.log" ]]; then
+        echo -en "$i\t" >> "${OUTPUT_DIR}/${c}.dat"
+        grep 'tps.*including' ${c}/${i}-[0-9]* | cut -f3 -d' ' \
+          | st --avg -no-header >> "${OUTPUT_DIR}/${c}.dat"
 
-        echo -en "$i\t" >> "${RESULTS_DIR}/latency-${c}.dat"
-        grep 'latency average' results-${c}/${i}-[0-9]* | cut -f4 -d' ' \
-          | st --avg -no-header >> "${RESULTS_DIR}/latency-${c}.dat"
+        echo -en "$i\t" >> "${OUTPUT_DIR}/${c}-latency.dat"
+        grep 'latency average' ${c}/${i}-[0-9]* | cut -f4 -d' ' \
+          | st --avg -no-header >> "${OUTPUT_DIR}/${c}-latency.dat"
       fi
     done
   done
 
-  printf '' > "${RESULTS_DIR}/stats-p.dat"
-  printf '' > "${RESULTS_DIR}/stats-l.dat"
-  for c in 50 100 200 300 400 500; do
+  printf '' > "${OUTPUT_DIR}/stats-p.dat"
+  printf '' > "${OUTPUT_DIR}/stats-l.dat"
+  for c in ${INPUT_DIRS}; do
 
     for i in ${TEST_CPUS}; do
-      if [[ -f "results-${c}/${i}-1.log" ]]; then
-        grep 'tps.*including' results-${c}/${i}-[0-9]* | cut -f3 -d' ' \
-          | st --avg --min --max --stddev >> "${RESULTS_DIR}/stats-p.dat"
+      if [[ -f "${c}/${i}-1.log" ]]; then
+        grep 'tps.*including' ${c}/${i}-[0-9]* | cut -f3 -d' ' \
+          | st --avg --min --max --stddev >> "${OUTPUT_DIR}/stats-p.dat"
 
-        grep 'latency average' results-${c}/${i}-[0-9]* | cut -f4 -d' ' \
-          | st --avg --min --max --stddev >> "${RESULTS_DIR}/stats-l.dat"
+        grep 'latency average' ${c}/${i}-[0-9]* | cut -f4 -d' ' \
+          | st --avg --min --max --stddev >> "${OUTPUT_DIR}/stats-l.dat"
       fi
     done
   done
@@ -80,63 +83,63 @@ generate_charts() {
     set grid back ls 12
 
     # Plot
-    set output "${RESULTS_DIR}/generic.svg"
+    set output "${OUTPUT_DIR}/generic.svg"
     set multiplot layout 2,1 title "{/:Bold Cloud SQL Performance (-c 200)}"
     unset xlabel
     set ylabel "tps"
-    plot "${RESULTS_DIR}/results-200.dat" using 1:2 title "Performance" with linespoints ls 1
+    plot "${OUTPUT_DIR}/results-200.dat" using 1:2 title "Performance" with linespoints ls 1
     set xlabel "Instance size (vCPUs)"
     set ylabel "ms"
-    plot "${RESULTS_DIR}/latency-200.dat" using 1:2 title "Latency" with linespoints ls 2 dashtype 3
+    plot "${OUTPUT_DIR}/results-200-latency.dat" using 1:2 title "Latency" with linespoints ls 2 dashtype 3
     unset multiplot
     
-    set output "${RESULTS_DIR}/ssl.svg"
+    set output "${OUTPUT_DIR}/ssl.svg"
     set multiplot layout 2,1 title "{/:Bold Cloud SQL Performance - SSL (-c 100)}"
     unset xlabel
     set ylabel "tps"
-    plot "${RESULTS_DIR}/results-100.dat" using 1:2 title "Performance" with linespoints ls 1, \
-         "${RESULTS_DIR}/results-100-ssl.dat" using 1:2 title "Perf. - SSL" with linespoints ls 2
+    plot "${OUTPUT_DIR}/results-100.dat" using 1:2 title "Performance" with linespoints ls 1, \
+         "${OUTPUT_DIR}/results-100-ssl.dat" using 1:2 title "Perf. - SSL" with linespoints ls 2
     set xlabel "Instance size (vCPUs)"
     set ylabel "ms"
-    plot "${RESULTS_DIR}/latency-100.dat" using 1:2 title "Latency" with linespoints ls 1 dashtype 3, \
-         "${RESULTS_DIR}/latency-100-ssl.dat" using 1:2 title "Lat. - SSL" with linespoints ls 2 dashtype 3
+    plot "${OUTPUT_DIR}/results-100-latency.dat" using 1:2 title "Latency" with linespoints ls 1 dashtype 3, \
+         "${OUTPUT_DIR}/results-100-ssl-latency.dat" using 1:2 title "Lat. - SSL" with linespoints ls 2 dashtype 3
     unset multiplot
 
-    set output "${RESULTS_DIR}/no-pool.svg"
+    set output "${OUTPUT_DIR}/no-pool.svg"
     set multiplot layout 2,1 title "{/:Bold Cloud SQL Performance - No Connection Pooling (-c 100)}"
     unset xlabel
     set ylabel "tps"
-    plot "${RESULTS_DIR}/results-100.dat" using 1:2 title "Performance" with linespoints ls 1, \
-         "${RESULTS_DIR}/results-100-no-pool.dat" using 1:2 title "Perf. - No Pooling" with linespoints ls 2
+    plot "${OUTPUT_DIR}/results-100.dat" using 1:2 title "Performance" with linespoints ls 1, \
+         "${OUTPUT_DIR}/results-100-no-pool.dat" using 1:2 title "Perf. - No Pooling" with linespoints ls 2
     set xlabel "Instance size (vCPUs)"
     set ylabel "ms"
-    plot "${RESULTS_DIR}/latency-100.dat" using 1:2 title "Latency" with linespoints ls 1 dashtype 3, \
-         "${RESULTS_DIR}/latency-100-no-pool.dat" using 1:2 title "Lat. - No Pooling" with linespoints ls 2 dashtype 3
+    plot "${OUTPUT_DIR}/results-100-latency.dat" using 1:2 title "Latency" with linespoints ls 1 dashtype 3, \
+         "${OUTPUT_DIR}/results-100-no-pool-latency.dat" using 1:2 title "Lat. - No Pooling" with linespoints ls 2 dashtype 3
     unset multiplot
 
-    set output "${RESULTS_DIR}/stats-p.svg"
+    set output "${OUTPUT_DIR}/stats-p.svg"
     set key right top
     set multiplot layout 2,1 title "{/:Bold Cloud SQL Performance - stats}"
     unset xlabel
     unset xtics
     set ylabel "tps"
-    plot "${RESULTS_DIR}/stats-p.dat" using 4 title "Performance - stddev" with linespoints ls 1
+    plot "${OUTPUT_DIR}/stats-p.dat" using 4 title "Performance - stddev" with linespoints ls 1
     set ylabel "ms"
-    plot "${RESULTS_DIR}/stats-l.dat" using 4 title "Latency - stddev" with linespoints ls 2 dashtype 3
+    plot "${OUTPUT_DIR}/stats-l.dat" using 4 title "Latency - stddev" with linespoints ls 2 dashtype 3
     unset multiplot
 
     set title "{/:Bold Cloud SQL Performance - Concurrent Clients × TPS}"
     set key right center
     set ylabel "tps"
     set xtics
-    set output "${RESULTS_DIR}/performance-all.svg"
+    set output "${OUTPUT_DIR}/performance-all.svg"
     set ylabel "tps"
-    plot for [i in "50 100 200 300 400 500"] "${RESULTS_DIR}/results-".i.".dat" using 1:2 title i." clients" with linespoints
+    plot for [i in "50 100 200 300 400 500"] "${OUTPUT_DIR}/results-".i.".dat" using 1:2 title i." clients" with linespoints
 
     set title "{/:Bold Cloud SQL Performance - Concurrent Clients × Latency}"
-    set output "${RESULTS_DIR}/latency-all.svg"
+    set output "${OUTPUT_DIR}/latency-all.svg"
     set ylabel "ms"
-    plot for [i in "50 100 200 300 400 500"] "${RESULTS_DIR}/latency-".i.".dat" using 1:2 title i." clients" with linespoints
+    plot for [i in "50 100 200 300 400 500"] "${OUTPUT_DIR}/results-".i."-latency.dat" using 1:2 title i." clients" with linespoints
 EOF
 }
 
