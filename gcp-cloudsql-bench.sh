@@ -148,33 +148,48 @@ setup_and_run() {
 # Generate graphs
 generate_charts() {
   printf '' > "${RESULTS_DIR}/results.dat"
+  printf '' > "${RESULTS_DIR}/latency.dat"
 
   for i in ${TEST_CPUS}; do
     printf '%s ' "${i}" >> "${RESULTS_DIR}/results.dat"
+    printf '%s ' "${i}" >> "${RESULTS_DIR}/latency.dat"
     grep 'tps.*including' ${RESULTS_DIR}/${i}-[0-9]* | cut -f3 -d' ' \
       | awk '{ sum += $1} END { print sum / NR }' >> "${RESULTS_DIR}/results.dat"
+    grep 'latency average' ${RESULTS_DIR}/${i}-[0-9]* | cut -f4 -d' ' \
+      | awk '{ sum += $1} END { print sum / NR }' >> "${RESULTS_DIR}/latency.dat"
   done
 
   gnuplot <<-EOF
-    set title "CloudSQL Performance - pgbench"
-    set terminal svg size 640,480 enhanced font "Verdana,16" rounded dashed
+    set title "Cloud SQL Performance - pgbench (avg, -c 100)"
+    set terminal svg size 1600,900 enhanced font "Verdana,20" rounded dashed
     set output "${RESULTS_DIR}/results.svg"
     set yrange [0:]
+
+    set y2tics
+    set ytics nomirror
+    set y2range [0:]
+
+    set xlabel "Instance size (vCPUs)"
+    set ylabel "TPS"
+    set y2label "ms"
+
     # Line style
-    set style line 1 lt rgb "#A00000" lw 3 pt 7 ps 0.9
-    set style line 2 lt rgb "#00A000" lw 3 pt 9 ps 0.9
-    set style line 3 lt rgb "#5060D0" lw 3 pt 5 ps 0.9
-    set style line 4 lt rgb "#F25900" lw 3 pt 13 ps 0.9
+    set style line 1 lt rgb "#A00000" lw 5 pt 7 ps 1.1
+    set style line 2 lt rgb "#00A000" lw 5 pt 9 ps 1.1
+    set style line 3 lt rgb "#5060D0" lw 5 pt 5 ps 0.9
+    set style line 4 lt rgb "#F25900" lw 5 pt 13 ps 0.9
     # Border style
     set style line 11 lc rgb '#808080' lt 1
-    set border 3 back ls 11
+    set border 4 back ls 11
     set tics nomirror
     # Grid
-    set style line 12 lc rgb '#808080' lt 0 lw 1
+    set style line 12 lc rgb '#808080' lt 0 lw 2
     set grid back ls 12
     # Plot
-    plot "${RESULTS_DIR}/results.dat" using 1:2 notitle with lines ls 1, \
-         "${RESULTS_DIR}/results.dat" using 1:2 notitle with points ls 1
+    plot "${RESULTS_DIR}/results.dat" using 1:2 title "performance (tps)" with lines ls 1, \
+         "${RESULTS_DIR}/results.dat" using 1:2 notitle with points ls 1, \
+         "${RESULTS_DIR}/latency.dat" using 1:2 title "latency (ms)" with lines ls 2 axis x1y2, \
+         "${RESULTS_DIR}/latency.dat" using 1:2 notitle with points ls 2 axis x1y2
 EOF
 
 }
