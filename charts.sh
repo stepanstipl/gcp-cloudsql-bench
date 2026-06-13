@@ -125,6 +125,7 @@ generate_charts() {
     set ylabel "tps"
     plot "${OUTPUT_DIR}/stats-p.dat" using 4 title "Performance - stddev" with linespoints ls 1
     set ylabel "ms"
+    set xlabel "Instance size (vCPUs)"
     plot "${OUTPUT_DIR}/stats-l.dat" using 4 title "Latency - stddev" with linespoints ls 2 dashtype 3
     unset multiplot
 
@@ -133,11 +134,13 @@ generate_charts() {
     set ylabel "tps"
     set xtics
     set output "${OUTPUT_DIR}/performance-all.svg"
+    set xlabel "Instance size (vCPUs)"
     set ylabel "tps"
     plot for [i in "50 100 200 300 400 500"] "${OUTPUT_DIR}/results-".i.".dat" using 1:2 title i." clients" with linespoints
 
     set title "{/:Bold Cloud SQL Performance - Concurrent Clients × Latency}"
     set output "${OUTPUT_DIR}/latency-all.svg"
+    set xlabel "Instance size (vCPUs)"
     set ylabel "ms"
     plot for [i in "50 100 200 300 400 500"] "${OUTPUT_DIR}/results-".i."-latency.dat" using 1:2 title i." clients" with linespoints
 EOF
